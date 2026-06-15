@@ -1,23 +1,15 @@
 package main
 
 import (
-	"log"
-	"net/http"
+    "log"
 
-	"github.com/gorilla/websocket"
+    "chat-server/config"
+    "chat-server/db"
 )
 
-var upgrader = websocket.Upgrader{}
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-	defer conn.Close()
-}
-
 func main() {
-	http.HandleFunc("/ws", wsHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+    cfg := config.Load()
+    db.Connect(cfg.DatabaseURL)
+
+    log.Printf("Server will run on port %s", cfg.Port)
 }
