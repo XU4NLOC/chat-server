@@ -12,7 +12,7 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/dbname?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://lexuanloc@localhost:5432/chatdb?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "supersecretkey"),
 		Port:        getEnv("PORT", "8080"),
 	}
