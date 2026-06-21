@@ -7,11 +7,16 @@ import (
 	"chat-server/config"
 	"chat-server/db"
     "chat-server/handlers"
+    "chat-server/hub"
 )
 
 func main() {
     cfg := config.Load()
     db.Connect(cfg.DatabaseURL)
+
+    h := hub.NewHub()
+    go h.Run()
+
     mux := http.NewServeMux()
     mux.HandleFunc("/register", handlers.Register(cfg))
     mux.HandleFunc("/login", handlers.Login(cfg))
