@@ -1,18 +1,20 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/websocket"
 	"chat-server/auth"
-	"chat-server/hub"
 	"chat-server/config"
+	"chat-server/hub"
 	"chat-server/models"
+
+	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader {
+var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 
@@ -65,17 +67,34 @@ func ServeWS(h *hub.Hub, cfg config.Config) http.HandlerFunc {
 
 		// 4. Create a new client and register it with the hub
 		client := &hub.Client{
-			Hub : 		h,
-			Conn: 		conn,
-			Send: 		make(chan []byte, 256),
-			Username: 	claims.Username,
-			RoomID: 	roomID,
+			Hub:      h,
+			Conn:     conn,
+			Send:     make(chan []byte, 256),
+			Username: claims.Username,
+			RoomID:   roomID,
 		}
 
 		h.Register <- client
 
-		// 5. Start the read and write pumps for the client
+		// 5. Send message history before starting pumps
+		history, err := models.GetRecentMessages(roomID, 50)
+		if err != nil {
+			log.Printf("Failed to load history: %v", err)
+		} else {
+			for _, msg := range history {
+				payload, _ := json.Marshal(map[string]interface{}{
+					"username":   msg.Username,
+					"content":    msg.Content,
+					"room_id":    msg.RoomID,
+					"created_at": msg.CreatedAt,
+					"historical": true,
+				})
+				client.Send <- payload
+			}
+		}
+		// 6. Start the read and write pumps for the client
 		go client.WritePump()
 		client.ReadPump()
 	}
 }
+
