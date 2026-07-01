@@ -1,362 +1,252 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Go Chat</title>
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Go Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f0f2f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
 
-      body {
-        font-family: system-ui, sans-serif;
-        background: #f0f2f5;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
+    /* ── Auth ── */
+    #auth-panel { width: 360px; background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    #auth-panel h2 { margin-bottom: 16px; }
+    input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; margin-bottom: 10px; outline: none; }
+    input:focus { border-color: #4f46e5; }
+    button { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
+    button:hover { background: #4338ca; }
+    button.secondary { background: white; color: #4f46e5; border: 1px solid #4f46e5; }
+    button.secondary:hover { background: #eef2ff; }
+    #auth-status { font-size: 0.85rem; color: #666; margin-top: 6px; text-align: center; }
 
-      .container {
-        width: 100%;
-        max-width: 480px;
-        padding: 16px;
-      }
+    /* ── App Layout ── */
+    #app { display: none; width: 820px; height: 560px; background: white; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); overflow: hidden; flex-direction: row; }
 
-      .card {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-        margin-bottom: 16px;
-      }
+    /* ── Sidebar ── */
+    #sidebar { width: 220px; background: #1e1e2e; display: flex; flex-direction: column; padding: 16px 12px; gap: 6px; flex-shrink: 0; }
+    #sidebar h3 { color: #aaa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px; margin-bottom: 4px; }
+    .room-item { padding: 8px 12px; border-radius: 8px; color: #ccc; cursor: pointer; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .room-item:hover { background: #2e2e42; color: white; }
+    .room-item.active { background: #4f46e5; color: white; }
+    #new-room-row { display: flex; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid #2e2e42; }
+    #new-room-input { flex: 1; padding: 7px 10px; border-radius: 8px; border: none; background: #2e2e42; color: white; font-size: 0.85rem; margin-bottom: 0; }
+    #new-room-input::placeholder { color: #666; }
+    #new-room-input:focus { outline: 1px solid #4f46e5; }
+    #new-room-btn { width: auto; padding: 7px 12px; font-size: 0.85rem; margin-bottom: 0; border-radius: 8px; }
 
-      h2 {
-        margin-bottom: 16px;
-        font-size: 1.2rem;
-        color: #111;
-      }
-      h3 {
-        margin-bottom: 12px;
-        font-size: 1rem;
-        color: #333;
-      }
+    /* ── Chat Area ── */
+    #chat-area { flex: 1; display: flex; flex-direction: column; }
+    #chat-header { padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+    #chat-header h2 { font-size: 1rem; color: #111; }
+    #online-count { font-size: 0.8rem; color: #22c55e; font-weight: 500; }
+    #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .message { padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; }
+    .message.mine { background: #4f46e5; color: white; align-self: flex-end; }
+    .message.theirs { background: #f0f0f0; color: #111; align-self: flex-start; }
+    .message.historical { opacity: 0.6; }
+    .message .sender { font-size: 0.72rem; margin-bottom: 2px; opacity: 0.75; }
+    .message .time { font-size: 0.7rem; margin-top: 3px; opacity: 0.6; text-align: right; }
+    #send-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #f0f0f0; }
+    #send-row input { flex: 1; margin-bottom: 0; }
+    #send-row button { width: auto; padding: 10px 20px; margin-bottom: 0; }
+    #no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.95rem; }
 
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        margin-bottom: 10px;
-        outline: none;
-      }
-      input:focus {
-        border-color: #4f46e5;
-      }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
 
-      button {
-        width: 100%;
-        padding: 10px;
-        background: #4f46e5;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        cursor: pointer;
-        margin-bottom: 8px;
-      }
-      button:hover {
-        background: #4338ca;
-      }
-      button.secondary {
-        background: white;
-        color: #4f46e5;
-        border: 1px solid #4f46e5;
-      }
-      button.secondary:hover {
-        background: #eef2ff;
-      }
+<!-- ── Auth Panel ── -->
+<div id="auth-panel">
+  <h2>💬 Go Chat</h2>
+  <input id="username" type="text" placeholder="Username"/>
+  <input id="password" type="password" placeholder="Password"/>
+  <button onclick="register()">Register</button>
+  <button class="secondary" onclick="login()">Login</button>
+  <div id="auth-status"></div>
+</div>
 
-      #status {
-        font-size: 0.85rem;
-        color: #666;
-        margin-top: 8px;
-        text-align: center;
-      }
-
-      #rooms-list {
-        margin-bottom: 12px;
-      }
-
-      .room-btn {
-        width: 100%;
-        text-align: left;
-        padding: 10px 14px;
-        background: #f8f8f8;
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        margin-bottom: 6px;
-        cursor: pointer;
-        color: #333;
-        font-size: 0.9rem;
-      }
-      .room-btn:hover {
-        background: #eef2ff;
-        border-color: #4f46e5;
-        color: #4f46e5;
-      }
-
-      #messages {
-        height: 300px;
-        overflow-y: auto;
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        background: #fafafa;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .message {
-        padding: 8px 12px;
-        border-radius: 8px;
-        max-width: 85%;
-        font-size: 0.9rem;
-        line-height: 1.4;
-      }
-      .message.mine {
-        background: #4f46e5;
-        color: white;
-        align-self: flex-end;
-      }
-      .message.theirs {
-        background: #e5e7eb;
-        color: #111;
-        align-self: flex-start;
-      }
-      .message .sender {
-        font-size: 0.75rem;
-        margin-bottom: 2px;
-        opacity: 0.7;
-      }
-
-      .send-row {
-        display: flex;
-        gap: 8px;
-      }
-      .send-row input {
-        margin-bottom: 0;
-        flex: 1;
-      }
-      .send-row button {
-        width: auto;
-        padding: 10px 20px;
-        margin-bottom: 0;
-      }
-
-      .hidden {
-        display: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- ── Auth Panel ── -->
-      <div class="card" id="auth-panel">
-        <h2>💬 Go Chat</h2>
-        <input id="username" type="text" placeholder="Username" />
-        <input id="password" type="password" placeholder="Password" />
-        <button onclick="register()">Register</button>
-        <button class="secondary" onclick="login()">Login</button>
-        <div id="status"></div>
-      </div>
-
-      <!-- ── Rooms Panel ── -->
-      <div class="card hidden" id="rooms-panel">
-        <h2>Rooms</h2>
-        <div id="rooms-list"></div>
-        <input id="new-room-name" type="text" placeholder="New room name..." />
-        <button onclick="createRoom()">+ Create Room</button>
-      </div>
-
-      <!-- ── Chat Panel ── -->
-      <div class="card hidden" id="chat-panel">
-        <h3 id="room-title">Room</h3>
-        <div id="messages"></div>
-        <div class="send-row">
-          <input
-            id="msg-input"
-            type="text"
-            placeholder="Type a message..."
-            onkeydown="if (event.key === 'Enter') sendMessage();"
-          />
-          <button onclick="sendMessage()">Send</button>
-        </div>
-      </div>
+<!-- ── Main App ── -->
+<div id="app">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h3>Rooms</h3>
+    <div id="rooms-list"></div>
+    <div id="new-room-row">
+      <input id="new-room-input" type="text" placeholder="New room…" onkeydown="if(event.key==='Enter') createRoom()"/>
+      <button id="new-room-btn" onclick="createRoom()">+</button>
     </div>
+  </div>
 
-    <script>
-      let token = null;
-      let socket = null;
-      let currentUser = null;
-      let currentRoomID = null;
+  <!-- Chat area -->
+  <div id="chat-area">
+    <div id="no-room">← Select a room to start chatting</div>
 
-      const $ = (id) => document.getElementById(id);
+    <div id="chat-header" class="hidden">
+      <h2 id="room-title"></h2>
+      <span id="online-count"></span>
+    </div>
+    <div id="messages" class="hidden"></div>
+    <div id="send-row" class="hidden">
+      <input id="msg-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter') sendMessage()"/>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+</div>
 
-      function setStatus(msg, color = "#666") {
-        $("status").style.color = color;
-        $("status").textContent = msg;
-      }
+<script>
+  let token = null
+  let socket = null
+  let currentUser = null
+  let currentRoomID = null
 
-      // ── Auth ──────────────────────────────────────────────────────────
+  const $ = id => document.getElementById(id)
 
-      async function register() {
-        const username = $("username").value.trim();
-        const password = $("password").value.trim();
-        if (!username || !password) return setStatus("Fill in both fields");
+  // ── Auth ──────────────────────────────────────────────────────────
 
-        const res = await fetch("/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        });
+  function setAuthStatus(msg, color = '#666') {
+    $('auth-status').style.color = color
+    $('auth-status').textContent = msg
+  }
 
-        if (res.status === 201) {
-          setStatus("Registered! Now log in.", "green");
-        } else {
-          const text = await res.text();
-          setStatus(text, "red");
+  async function register() {
+    const username = $('username').value.trim()
+    const password = $('password').value.trim()
+    if (!username || !password) return setAuthStatus('Fill in both fields')
+    const res = await fetch('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    if (res.status === 201) setAuthStatus('Registered! Now log in.', 'green')
+    else setAuthStatus(await res.text(), 'red')
+  }
+
+  async function login() {
+    const username = $('username').value.trim()
+    const password = $('password').value.trim()
+    if (!username || !password) return setAuthStatus('Fill in both fields')
+    const res = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    if (res.ok) {
+      const data = await res.json()
+      token = data.token
+      currentUser = username
+      $('auth-panel').classList.add('hidden')
+      $('app').style.display = 'flex'
+      loadRooms()
+    } else {
+      setAuthStatus(await res.text(), 'red')
+    }
+  }
+
+  // ── Rooms ─────────────────────────────────────────────────────────
+
+  async function loadRooms() {
+    const res = await fetch('/rooms')
+    const rooms = await res.json()
+    const list = $('rooms-list')
+    list.innerHTML = ''
+    rooms.forEach(room => {
+      const div = document.createElement('div')
+      div.className = 'room-item' + (room.id === currentRoomID ? ' active' : '')
+      div.textContent = '# ' + room.name
+      div.dataset.id = room.id
+      div.onclick = () => joinRoom(room.id, room.name)
+      list.appendChild(div)
+    })
+  }
+
+  async function createRoom() {
+    const name = $('new-room-input').value.trim()
+    if (!name) return
+    const res = await fetch('/rooms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    })
+    if (res.ok) {
+      const room = await res.json()
+      $('new-room-input').value = ''
+      await loadRooms()
+      joinRoom(room.id, room.name)
+    }
+  }
+
+  // ── WebSocket ─────────────────────────────────────────────────────
+
+  function joinRoom(roomID, roomName) {
+    if (roomID === currentRoomID) return   // already in this room
+    if (socket) socket.close()             // close previous connection
+
+    currentRoomID = roomID
+    $('room-title').textContent = '# ' + roomName
+    $('online-count').textContent = ''
+    $('messages').innerHTML = ''
+
+    // Show chat UI
+    $('no-room').classList.add('hidden')
+    $('chat-header').classList.remove('hidden')
+    $('messages').classList.remove('hidden')
+    $('send-row').classList.remove('hidden')
+
+    // Update sidebar active state
+    document.querySelectorAll('.room-item').forEach(el => {
+      el.classList.toggle('active', parseInt(el.dataset.id) === roomID)
+    })
+
+    socket = new WebSocket(`ws://localhost:8080/ws?token=${token}&room_id=${roomID}`)
+
+    socket.onmessage = (event) => {
+      const msg = JSON.parse(event.data)
+
+      // System event — not a chat message
+      if (msg.type === 'system') {
+        if (msg.event === 'user_count') {
+          $('online-count').textContent = `🟢 ${msg.count} online`
         }
+        return
       }
 
-      async function login() {
-        const username = $("username").value.trim();
-        const password = $("password").value.trim();
-        if (!username || !password) return setStatus("Fill in both fields");
-
-        const res = await fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          token = data.token;
-          currentUser = username;
-          setStatus("");
-          $("auth-panel").classList.add("hidden");
-          $("rooms-panel").classList.remove("hidden");
-          loadRooms();
-        } else {
-          const text = await res.text();
-          setStatus(text, "red");
-        }
+      // Historical message
+      if (msg.historical) {
+        const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        appendMessage(msg.username, msg.content, msg.username === currentUser, true, time)
+        return
       }
 
-      // ── Rooms ─────────────────────────────────────────────────────────
+      // Live message
+      appendMessage(msg.username, msg.content, msg.username === currentUser, false)
+    }
 
-      async function loadRooms() {
-        const res = await fetch("/rooms");
-        const rooms = await res.json();
-        const list = $("rooms-list");
-        list.innerHTML = "";
+    socket.onclose = () => {
+      $('online-count').textContent = '🔴 disconnected'
+    }
+  }
 
-        if (rooms.length === 0) {
-          list.innerHTML =
-            '<p style="color:#999;font-size:0.9rem">No rooms yet. Create one below.</p>';
-          return;
-        }
+  function sendMessage() {
+    const input = $('msg-input')
+    const content = input.value.trim()
+    if (!content || !socket || socket.readyState !== WebSocket.OPEN) return
+    socket.send(JSON.stringify({ content }))
+    input.value = ''
+  }
 
-        rooms.forEach((room) => {
-          const btn = document.createElement("button");
-          btn.className = "room-btn";
-          btn.textContent = "# " + room.name;
-          btn.onclick = () => joinRoom(room.id, room.name);
-          list.appendChild(btn);
-        });
-      }
-
-      async function createRoom() {
-        const name = $("new-room-name").value.trim();
-        if (!name) return;
-
-        const res = await fetch("/rooms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name }),
-        });
-
-        if (res.ok) {
-          $("new-room-name").value = "";
-          loadRooms();
-        } else {
-          alert("Could not create room");
-        }
-      }
-
-      // ── WebSocket ─────────────────────────────────────────────────────
-
-      function joinRoom(roomID, roomName) {
-        // Close any existing connection
-        if (socket) socket.close();
-
-        currentRoomID = roomID;
-        $("room-title").textContent = "# " + roomName;
-        $("messages").innerHTML = "";
-        $("rooms-panel").classList.add("hidden");
-        $("chat-panel").classList.remove("hidden");
-
-        // Connect to WebSocket with token + room_id as query params
-        socket = new WebSocket(
-          `ws://localhost:8080/ws?token=${token}&room_id=${roomID}`,
-        );
-
-        socket.onopen = () => {
-          console.log("WebSocket connected");
-        };
-
-        socket.onmessage = (event) => {
-          const msg = JSON.parse(event.data);
-          appendMessage(
-            msg.username,
-            msg.content,
-            msg.username === currentUser,
-          );
-        };
-
-        socket.onclose = () => {
-          console.log("WebSocket disconnected");
-        };
-
-        socket.onerror = (err) => {
-          console.error("WebSocket error", err);
-        };
-      }
-
-      function sendMessage() {
-        const input = $("msg-input");
-        const content = input.value.trim();
-        if (!content || !socket) return;
-
-        socket.send(JSON.stringify({ content }));
-        input.value = "";
-      }
-
-      function appendMessage(username, content, isMine) {
-        const box = $("messages");
-        const div = document.createElement("div");
-        div.className = "message " + (isMine ? "mine" : "theirs");
-        div.innerHTML = `<div class="sender">${username}</div><div>${content}</div>`;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight; // auto-scroll to latest
-      }
-    </script>
-  </body>
+  function appendMessage(username, content, isMine, isHistorical = false, time = null) {
+    const box = $('messages')
+    const div = document.createElement('div')
+    div.className = `message ${isMine ? 'mine' : 'theirs'}${isHistorical ? ' historical' : ''}`
+    div.innerHTML = `
+      <div class="sender">${username}</div>
+      <div>${content}</div>
+      ${time ? `<div class="time">${time}</div>` : ''}
+    `
+    box.appendChild(div)
+    box.scrollTop = box.scrollHeight
+  }
+</script>
+</body>
 </html>
