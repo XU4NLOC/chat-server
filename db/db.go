@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"log"
+
 	_ "github.com/lib/pq"
 )
 
@@ -25,28 +26,36 @@ func Connect(databaseURL string) {
 
 func migrate() {
 	schema := `
-	CREATE TABLE IF NOT EXISTS users (
-		id SERIAL PRIMARY KEY,
-		name TEXT UNIQUE NOT NULL,
-		created_at TIMESTAMPTZ DEFAULT NOW()
-		);
+    DROP TABLE IF EXISTS messages CASCADE;
+    DROP TABLE IF EXISTS rooms CASCADE;
+    DROP TABLE IF EXISTS users CASCADE;
 
-	CREATE TABLE IF NOT EXISTS rooms (
-		id SERIAL PRIMARY KEY,
-		name TEXT UNIQUE NOT NULL,
-		created_at TIMESTAMPTZ DEFAULT NOW()
-		);
+    CREATE TABLE users (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
 
-	CREATE TABLE IF NOT EXISTS messages (
-		id SERIAL PRIMARY KEY,
-		room_id INT REFERENCES rooms(id),
-		user_id INT REFERENCES users(id),
-		content TEXT NOT NULL,
-		created_at TIMESTAMPTZ DEFAULT NOW()
-	);
-	`
+    CREATE TABLE rooms (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE messages (
+        id SERIAL PRIMARY KEY,
+        room_id INT REFERENCES rooms(id),
+        user_id INT REFERENCES users(id),
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    `
+
 	if _, err := DB.Exec(schema); err != nil {
-		log.Fatalf("Error migrating database: %v", err)
+		log.Fatalf("Migration failed: %v", err)
 	}
+
 	log.Println("Database migration completed")
 }
+
