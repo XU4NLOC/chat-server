@@ -8,7 +8,7 @@ import (
 )
 
 type BroadcastMessage struct {
-	RoomID  int   
+	RoomID  int
 	Sender  string
 	Payload []byte
 }
@@ -20,15 +20,15 @@ type OutgoingMessage struct {
 }
 
 type Hub struct {
-	rooms		map[int]map[*Client]bool
-	Register	chan *Client
-	Unregister 	chan *Client
-	Broadcast  	chan BroadcastMessage
+	rooms      map[int]map[*Client]bool
+	Register   chan *Client
+	Unregister chan *Client
+	Broadcast  chan BroadcastMessage
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		rooms: 		make(map[int]map[*Client]bool),
+		rooms:      make(map[int]map[*Client]bool),
 		Broadcast:  make(chan BroadcastMessage),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
@@ -67,7 +67,6 @@ func (h *Hub) Run() {
 
 			go saveMessage(msg.RoomID, msg.Sender, incoming.Content)
 
-
 			outgoing, _ := json.Marshal(OutgoingMessage{
 				Username: msg.Sender,
 				Content:  incoming.Content,
@@ -86,7 +85,6 @@ func (h *Hub) Run() {
 	}
 }
 
-
 func saveMessage(roomID int, sender, content string) {
 	var userID int
 	err := db.DB.QueryRow("SELECT id FROM users WHERE username = $1", sender).Scan(&userID)
@@ -100,3 +98,16 @@ func saveMessage(roomID int, sender, content string) {
 		log.Printf("Error saving message from %s: %v", sender, err)
 	}
 }
+
+func (h *Hub) BroadcastSystemEvent(roomID int, event map[string]interface{}) {
+	payload, _ := json.Marshal(event)
+	for client := range h.rooms[roomID] {
+		select {
+		case client.Send <- payload:
+		default:
+			close(client.Send)
+			delete(h.rooms[roomID], client)
+		}
+	}
+}
+
