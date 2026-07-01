@@ -6,105 +6,467 @@
   <title>Go Chat</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #f0f2f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
 
-    /* ── Auth ── */
-    #auth-panel { width: 360px; background: white; border-radius: 12px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
-    #auth-panel h2 { margin-bottom: 16px; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; margin-bottom: 10px; outline: none; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ── Auth Panel ─────────────────────────────────────────── */
+    #auth-panel {
+      width: 360px;
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    #auth-panel h2 {
+      margin-bottom: 6px;
+      font-size: 1.3rem;
+      color: #111;
+    }
+    #auth-panel p {
+      color: #888;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    /* ── Shared inputs & buttons ────────────────────────────── */
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
     input:focus { border-color: #4f46e5; }
-    button { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+    }
     button:hover { background: #4338ca; }
-    button.secondary { background: white; color: #4f46e5; border: 1px solid #4f46e5; }
+
+    button.secondary {
+      background: white;
+      color: #4f46e5;
+      border: 1px solid #4f46e5;
+    }
     button.secondary:hover { background: #eef2ff; }
-    #auth-status { font-size: 0.85rem; color: #666; margin-top: 6px; text-align: center; }
 
-    /* ── App Layout ── */
-    #app { display: none; width: 820px; height: 560px; background: white; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); overflow: hidden; flex-direction: row; }
+    #auth-status {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 6px;
+      text-align: center;
+      min-height: 18px;
+    }
 
-    /* ── Sidebar ── */
-    #sidebar { width: 220px; background: #1e1e2e; display: flex; flex-direction: column; padding: 16px 12px; gap: 6px; flex-shrink: 0; }
-    #sidebar h3 { color: #aaa; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px; margin-bottom: 4px; }
-    .room-item { padding: 8px 12px; border-radius: 8px; color: #ccc; cursor: pointer; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .room-item:hover { background: #2e2e42; color: white; }
+    /* ── App Layout ─────────────────────────────────────────── */
+    #app {
+      display: none;
+      width: 860px;
+      height: 580px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.12);
+      overflow: hidden;
+      flex-direction: row;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    #sidebar {
+      width: 230px;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    #sidebar-header {
+      padding: 18px 16px 12px;
+      border-bottom: 1px solid #2a2a42;
+    }
+    #sidebar-header h2 {
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    #sidebar-header span {
+      font-size: 0.75rem;
+      color: #7c7c9c;
+      display: block;
+      margin-top: 2px;
+    }
+
+    #rooms-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 8px;
+    }
+
+    .section-label {
+      color: #5c5c7c;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+      padding: 0 8px;
+      margin-bottom: 6px;
+    }
+
+    .room-item {
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: #9090b0;
+      cursor: pointer;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: background 0.1s, color 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .room-item::before { content: '#'; opacity: 0.5; flex-shrink: 0; }
+    .room-item:hover { background: #2a2a42; color: #ccc; }
     .room-item.active { background: #4f46e5; color: white; }
-    #new-room-row { display: flex; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid #2e2e42; }
-    #new-room-input { flex: 1; padding: 7px 10px; border-radius: 8px; border: none; background: #2e2e42; color: white; font-size: 0.85rem; margin-bottom: 0; }
-    #new-room-input::placeholder { color: #666; }
-    #new-room-input:focus { outline: 1px solid #4f46e5; }
-    #new-room-btn { width: auto; padding: 7px 12px; font-size: 0.85rem; margin-bottom: 0; border-radius: 8px; }
+    .room-item.active::before { opacity: 0.8; }
 
-    /* ── Chat Area ── */
-    #chat-area { flex: 1; display: flex; flex-direction: column; }
-    #chat-header { padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
-    #chat-header h2 { font-size: 1rem; color: #111; }
+    #sidebar-footer {
+      padding: 12px 8px;
+      border-top: 1px solid #2a2a42;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #new-room-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    #new-room-input {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid #2a2a42;
+      background: #12122a;
+      color: #ccc;
+      font-size: 0.82rem;
+      margin-bottom: 0;
+    }
+    #new-room-input::placeholder { color: #4a4a6a; }
+    #new-room-input:focus { border-color: #4f46e5; outline: none; }
+
+    #new-room-btn {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      margin-bottom: 0;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      line-height: 1;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #logout-btn {
+      width: 100%;
+      padding: 7px 10px;
+      background: transparent;
+      color: #5c5c7c;
+      border: 1px solid #2a2a42;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-bottom: 0;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      text-align: left;
+    }
+    #logout-btn:hover {
+      background: #2d1a1a;
+      color: #f87171;
+      border-color: #5a2020;
+    }
+
+    /* ── Chat Area ───────────────────────────────────────────── */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    #no-room {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #bbb;
+      gap: 10px;
+    }
+    #no-room .icon { font-size: 2.5rem; }
+    #no-room p { font-size: 0.9rem; }
+
+    #chat-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    #chat-header-left { display: flex; align-items: center; gap: 8px; }
+    #room-title { font-size: 0.95rem; font-weight: 600; color: #111; }
+    #room-prefix { color: #aaa; font-weight: 400; }
     #online-count { font-size: 0.8rem; color: #22c55e; font-weight: 500; }
-    #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-    .message { padding: 8px 12px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; }
-    .message.mine { background: #4f46e5; color: white; align-self: flex-end; }
-    .message.theirs { background: #f0f0f0; color: #111; align-self: flex-start; }
-    .message.historical { opacity: 0.6; }
-    .message .sender { font-size: 0.72rem; margin-bottom: 2px; opacity: 0.75; }
-    .message .time { font-size: 0.7rem; margin-top: 3px; opacity: 0.6; text-align: right; }
-    #send-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #f0f0f0; }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+
+    /* Date divider */
+    .date-divider {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #bbb;
+      margin: 8px 0;
+      position: relative;
+    }
+    .date-divider::before, .date-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 38%;
+      height: 1px;
+      background: #eee;
+    }
+    .date-divider::before { left: 0; }
+    .date-divider::after { right: 0; }
+
+    .message {
+      padding: 8px 12px;
+      border-radius: 10px;
+      max-width: 78%;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+    .message.mine {
+      background: #4f46e5;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 3px;
+    }
+    .message.theirs {
+      background: #f3f4f6;
+      color: #111;
+      align-self: flex-start;
+      border-bottom-left-radius: 3px;
+    }
+    .message.historical { opacity: 0.55; }
+    .message .sender {
+      font-size: 0.72rem;
+      margin-bottom: 3px;
+      font-weight: 600;
+      opacity: 0.75;
+    }
+    .message.mine .sender { text-align: right; }
+    .message .time {
+      font-size: 0.68rem;
+      margin-top: 4px;
+      opacity: 0.55;
+      text-align: right;
+    }
+
+    /* Typing indicator */
+    #typing-indicator {
+      font-size: 0.78rem;
+      color: #aaa;
+      padding: 4px 20px 0;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    #send-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
     #send-row input { flex: 1; margin-bottom: 0; }
-    #send-row button { width: auto; padding: 10px 20px; margin-bottom: 0; }
-    #no-room { flex: 1; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 0.95rem; }
+    #send-btn {
+      width: auto;
+      padding: 10px 18px;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    /* Scrollbar styling */
+    #messages::-webkit-scrollbar { width: 4px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+    #rooms-section::-webkit-scrollbar { width: 3px; }
+    #rooms-section::-webkit-scrollbar-track { background: transparent; }
+    #rooms-section::-webkit-scrollbar-thumb { background: #2a2a42; border-radius: 3px; }
 
     .hidden { display: none !important; }
+
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1a1a2e;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
 <!-- ── Auth Panel ── -->
 <div id="auth-panel">
   <h2>💬 Go Chat</h2>
-  <input id="username" type="text" placeholder="Username"/>
-  <input id="password" type="password" placeholder="Password"/>
-  <button onclick="register()">Register</button>
-  <button class="secondary" onclick="login()">Login</button>
+  <p>Sign in or create an account to start chatting.</p>
+  <input id="username" type="text" placeholder="Username" autocomplete="username"/>
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password"
+    onkeydown="if(event.key==='Enter') login()"/>
+  <button onclick="login()">Sign in</button>
+  <button class="secondary" onclick="register()">Create account</button>
   <div id="auth-status"></div>
 </div>
 
 <!-- ── Main App ── -->
 <div id="app">
+
   <!-- Sidebar -->
   <div id="sidebar">
-    <h3>Rooms</h3>
-    <div id="rooms-list"></div>
-    <div id="new-room-row">
-      <input id="new-room-input" type="text" placeholder="New room…" onkeydown="if(event.key==='Enter') createRoom()"/>
-      <button id="new-room-btn" onclick="createRoom()">+</button>
+    <div id="sidebar-header">
+      <h2>💬 Go Chat</h2>
+      <span id="sidebar-user"></span>
+    </div>
+
+    <div id="rooms-section">
+      <div class="section-label">Rooms</div>
+      <div id="rooms-list"></div>
+    </div>
+
+    <div id="sidebar-footer">
+      <div id="new-room-row">
+        <input id="new-room-input" type="text" placeholder="New room name…"
+          onkeydown="if(event.key==='Enter') createRoom()"/>
+        <button id="new-room-btn" onclick="createRoom()" title="Create room">+</button>
+      </div>
+      <button id="logout-btn" onclick="logout()">⟵ Sign out</button>
     </div>
   </div>
 
-  <!-- Chat area -->
+  <!-- Chat Area -->
   <div id="chat-area">
-    <div id="no-room">← Select a room to start chatting</div>
 
+    <!-- Empty state -->
+    <div id="no-room">
+      <div class="icon">💬</div>
+      <p>Select a room from the sidebar to start chatting</p>
+    </div>
+
+    <!-- Chat header -->
     <div id="chat-header" class="hidden">
-      <h2 id="room-title"></h2>
+      <div id="chat-header-left">
+        <span id="room-prefix">#</span>
+        <span id="room-title"></span>
+      </div>
       <span id="online-count"></span>
     </div>
+
+    <!-- Messages -->
     <div id="messages" class="hidden"></div>
+
+    <!-- Typing indicator -->
+    <div id="typing-indicator" class="hidden"></div>
+
+    <!-- Send row -->
     <div id="send-row" class="hidden">
-      <input id="msg-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter') sendMessage()"/>
-      <button onclick="sendMessage()">Send</button>
+      <input id="msg-input" type="text" placeholder="Message…"
+        onkeydown="if(event.key==='Enter') sendMessage()"/>
+      <button id="send-btn" onclick="sendMessage()">Send</button>
     </div>
+
   </div>
 </div>
 
 <script>
-  let token = null
-  let socket = null
-  let currentUser = null
-  let currentRoomID = null
+  // ── State ─────────────────────────────────────────────────────────
+  let token       = localStorage.getItem('chat_token')
+  let currentUser = localStorage.getItem('chat_user')
+  let socket      = null
+  let currentRoomID   = null
+  let currentRoomName = null
 
   const $ = id => document.getElementById(id)
 
-  // ── Auth ──────────────────────────────────────────────────────────
+  // ── Auto-restore session on page load ────────────────────────────
+  window.addEventListener('load', () => {
+    if (token && currentUser) {
+      showApp()
+      loadRooms()
+    }
+  })
 
-  function setAuthStatus(msg, color = '#666') {
+  // ── Toast ─────────────────────────────────────────────────────────
+  let toastTimer = null
+  function showToast(msg) {
+    const t = $('toast')
+    t.textContent = msg
+    t.classList.add('show')
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000)
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────
+  function setAuthStatus(msg, color = '#888') {
     $('auth-status').style.color = color
     $('auth-status').textContent = msg
   }
@@ -112,85 +474,134 @@
   async function register() {
     const username = $('username').value.trim()
     const password = $('password').value.trim()
-    if (!username || !password) return setAuthStatus('Fill in both fields')
+    if (!username || !password) return setAuthStatus('Please fill in both fields.')
+
     const res = await fetch('/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     })
-    if (res.status === 201) setAuthStatus('Registered! Now log in.', 'green')
-    else setAuthStatus(await res.text(), 'red')
+
+    if (res.status === 201) {
+      setAuthStatus('Account created — sign in below.', '#22c55e')
+    } else {
+      setAuthStatus(await res.text(), '#ef4444')
+    }
   }
 
   async function login() {
     const username = $('username').value.trim()
     const password = $('password').value.trim()
-    if (!username || !password) return setAuthStatus('Fill in both fields')
+    if (!username || !password) return setAuthStatus('Please fill in both fields.')
+
     const res = await fetch('/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     })
+
     if (res.ok) {
       const data = await res.json()
       token = data.token
       currentUser = username
-      $('auth-panel').classList.add('hidden')
-      $('app').style.display = 'flex'
+      localStorage.setItem('chat_token', token)
+      localStorage.setItem('chat_user', currentUser)
+      setAuthStatus('')
+      showApp()
       loadRooms()
     } else {
-      setAuthStatus(await res.text(), 'red')
+      setAuthStatus(await res.text(), '#ef4444')
     }
   }
 
-  // ── Rooms ─────────────────────────────────────────────────────────
+  function logout() {
+    localStorage.removeItem('chat_token')
+    localStorage.removeItem('chat_user')
+    token = null
+    currentUser = null
+    currentRoomID = null
+    currentRoomName = null
+    if (socket) { socket.close(); socket = null; }
 
+    $('app').style.display = 'none'
+    $('auth-panel').classList.remove('hidden')
+    $('rooms-list').innerHTML = ''
+    $('messages').innerHTML = ''
+    $('username').value = ''
+    $('password').value = ''
+    setAuthStatus('')
+  }
+
+  function showApp() {
+    $('auth-panel').classList.add('hidden')
+    $('app').style.display = 'flex'
+    $('sidebar-user').textContent = currentUser
+  }
+
+  // ── Rooms ─────────────────────────────────────────────────────────
   async function loadRooms() {
     const res = await fetch('/rooms')
+    if (!res.ok) return
     const rooms = await res.json()
-    const list = $('rooms-list')
-    list.innerHTML = ''
-    rooms.forEach(room => {
-      const div = document.createElement('div')
-      div.className = 'room-item' + (room.id === currentRoomID ? ' active' : '')
-      div.textContent = '# ' + room.name
-      div.dataset.id = room.id
-      div.onclick = () => joinRoom(room.id, room.name)
-      list.appendChild(div)
-    })
+    $('rooms-list').innerHTML = ''
+    rooms.forEach(addRoomToSidebar)
+  }
+
+  function addRoomToSidebar(room) {
+    // Skip if already in sidebar
+    if (document.querySelector(`.room-item[data-id="${room.id}"]`)) return
+
+    const div = document.createElement('div')
+    div.className = 'room-item' + (room.id === currentRoomID ? ' active' : '')
+    div.textContent = room.name
+    div.dataset.id = room.id
+    div.title = '# ' + room.name
+    div.onclick = () => joinRoom(room.id, room.name)
+    $('rooms-list').appendChild(div)
   }
 
   async function createRoom() {
     const name = $('new-room-input').value.trim()
     if (!name) return
+
     const res = await fetch('/rooms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
     })
+
     if (res.ok) {
       const room = await res.json()
       $('new-room-input').value = ''
-      await loadRooms()
+      // Add immediately for the creator and join it
+      // Other connected users will get it via the new_room system event
+      addRoomToSidebar(room)
       joinRoom(room.id, room.name)
+    } else {
+      showToast('Could not create room — name may already exist.')
     }
   }
 
   // ── WebSocket ─────────────────────────────────────────────────────
-
   function joinRoom(roomID, roomName) {
-    if (roomID === currentRoomID) return   // already in this room
-    if (socket) socket.close()             // close previous connection
+    if (roomID === currentRoomID) return
+    if (socket) socket.close()
 
-    currentRoomID = roomID
-    $('room-title').textContent = '# ' + roomName
+    currentRoomID   = roomID
+    currentRoomName = roomName
+
+    // Update header
+    $('room-title').textContent = roomName
     $('online-count').textContent = ''
+
+    // Clear messages
     $('messages').innerHTML = ''
 
     // Show chat UI
     $('no-room').classList.add('hidden')
     $('chat-header').classList.remove('hidden')
     $('messages').classList.remove('hidden')
+    $('typing-indicator').classList.remove('hidden')
     $('send-row').classList.remove('hidden')
 
     // Update sidebar active state
@@ -198,33 +609,52 @@
       el.classList.toggle('active', parseInt(el.dataset.id) === roomID)
     })
 
-    socket = new WebSocket(`ws://localhost:8080/ws?token=${token}&room_id=${roomID}`)
+    // Connect WebSocket
+    const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws'
+    socket = new WebSocket(`${wsProtocol}://${location.host}/ws?token=${token}&room_id=${roomID}`)
+
+    socket.onopen = () => {
+      console.log(`Connected to room: ${roomName}`)
+    }
 
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data)
 
-      // System event — not a chat message
+      // ── System events ──
       if (msg.type === 'system') {
         if (msg.event === 'user_count') {
           $('online-count').textContent = `🟢 ${msg.count} online`
         }
+        if (msg.event === 'new_room') {
+          addRoomToSidebar(msg.room)
+          showToast(`# ${msg.room.name} was just created`)
+        }
         return
       }
 
-      // Historical message
+      // ── Historical message ──
       if (msg.historical) {
-        const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const time = new Date(msg.created_at).toLocaleTimeString([], {
+          hour: '2-digit', minute: '2-digit'
+        })
         appendMessage(msg.username, msg.content, msg.username === currentUser, true, time)
         return
       }
 
-      // Live message
+      // ── Live message ──
       appendMessage(msg.username, msg.content, msg.username === currentUser, false)
     }
 
     socket.onclose = () => {
-      $('online-count').textContent = '🔴 disconnected'
+      $('online-count').textContent = '🔴 Disconnected'
     }
+
+    socket.onerror = () => {
+      showToast('Connection error — try refreshing.')
+    }
+
+    // Focus input
+    setTimeout(() => $('msg-input').focus(), 100)
   }
 
   function sendMessage() {
@@ -235,17 +665,43 @@
     input.value = ''
   }
 
+  // ── Render a message bubble ───────────────────────────────────────
+  let lastDateLabel = null
+
   function appendMessage(username, content, isMine, isHistorical = false, time = null) {
     const box = $('messages')
+
+    // Date divider (only for historical messages with timestamps)
+    if (isHistorical && time) {
+      const dateLabel = new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })
+      if (dateLabel !== lastDateLabel) {
+        lastDateLabel = dateLabel
+        const div = document.createElement('div')
+        div.className = 'date-divider'
+        div.textContent = dateLabel
+        box.appendChild(div)
+      }
+    }
+
     const div = document.createElement('div')
     div.className = `message ${isMine ? 'mine' : 'theirs'}${isHistorical ? ' historical' : ''}`
     div.innerHTML = `
-      <div class="sender">${username}</div>
-      <div>${content}</div>
+      <div class="sender">${escapeHtml(username)}</div>
+      <div>${escapeHtml(content)}</div>
       ${time ? `<div class="time">${time}</div>` : ''}
     `
     box.appendChild(div)
     box.scrollTop = box.scrollHeight
+  }
+
+  // Prevent XSS — escape user-generated content before inserting into DOM
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
   }
 </script>
 </body>
