@@ -45,12 +45,24 @@ func (h *Hub) Run() {
 			h.rooms[client.RoomID][client] = true
 			log.Printf("Client %s joined room %d", client.Username, client.RoomID)
 
+			h.BroadcastSystemEvent(client.RoomID, map[string]interface{}{
+				"type":  "system",
+				"event": "user_count",
+				"count": len(h.rooms[client.RoomID]),
+			})
+
 		case client := <-h.Unregister:
 			if clients, ok := h.rooms[client.RoomID]; ok {
 				if _, ok := clients[client]; ok {
 					delete(clients, client)
 					close(client.Send)
 					log.Printf("Client %s left room %d", client.Username, client.RoomID)
+
+					h.BroadcastSystemEvent(client.RoomID, map[string]interface{}{
+						"type":  "system",
+						"event": "user_count",
+						"count": len(h.rooms[client.RoomID]),
+					})
 				}
 			}
 
@@ -110,4 +122,3 @@ func (h *Hub) BroadcastSystemEvent(roomID int, event map[string]interface{}) {
 		}
 	}
 }
-
